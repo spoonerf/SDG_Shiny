@@ -6,25 +6,19 @@
 #
 #    http://shiny.rstudio.com/
 #
-
-library(shiny)
-library(maps)
-library(mapproj)
+library(dplyr)
+library(janitor)
+library(leaflet)
+library(RColorBrewer)
 library(readr)
+library(rgeos)
 library(rnaturalearthdata)
 library(rnaturalearth)
 library(rnaturalearthhires)
-library(janitor)
-library(dplyr)
+library(shiny)
 library(sf)
-library(leaflet)
-library(RColorBrewer)
-library(rgeos)
 
 source("sdg_plotter.R")
-
-
-
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(titlePanel(strong("SDG Indicators")),

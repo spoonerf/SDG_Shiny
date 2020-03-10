@@ -84,7 +84,7 @@ sdg_plotter <- function(goal_view = 1:17, var_in = "num_indicators"){
     addProviderTiles("CartoDB.Positron") %>%
     addPolygons(
       fillColor = ~ pal(disp_val),
-      weight = 2,
+      weight = 1,
       opacity = 1,
       color = "white",
       dashArray = "3",
