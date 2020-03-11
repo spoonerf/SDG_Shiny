@@ -7,8 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 library(dplyr)
+library(gapminder)
 library(janitor)
 library(leaflet)
+library(plotly)
 library(RColorBrewer)
 library(readr)
 library(rgeos)
@@ -26,6 +28,8 @@ ui <- fluidPage(titlePanel(strong("SDG Indicators")),
                 
                 navbarPage(
                   "",
+                  
+                  
                   tabPanel("Maps",
                            sidebarLayout(
                              sidebarPanel(
@@ -76,7 +80,9 @@ ui <- fluidPage(titlePanel(strong("SDG Indicators")),
                              ))
                            )),
                   
-                  tabPanel("Goal Specific",
+                  
+                  
+                  tabPanel("Indicator Availability",
                            sidebarLayout(
                              sidebarPanel(
                                selectInput("ind_view",
@@ -108,8 +114,40 @@ ui <- fluidPage(titlePanel(strong("SDG Indicators")),
                                            )),
                                            
                                            # Main panel for displaying outputs ----
-                                           mainPanel(plotOutput("countryPlot"))
-                                         ))
+                                           mainPanel(plotOutput("goalPlot"))
+                                         )),
+                  
+                  tabPanel("Indicator Data Age",
+                           sidebarLayout(
+                             sidebarPanel(
+                               selectInput("age_view",
+                                           h4("Select Goal:"),
+                                           choices = list(
+                                             "Goal 1 - No Poverty" = "Goal 1",
+                                             "Goal 2 - Zero Hunger" = "Goal 2",
+                                             "Goal 3 - Good Health and well-being" = "Goal 3",
+                                             "Goal 4 - Quality Education" = "Goal 4",
+                                             "Goal 5 - Gender Equality" = "Goal 5",
+                                             "Goal 6 - Clean Water and Sanitation" = "Goal 6",
+                                             "Goal 7 - Affordable and Clean Energy" = "Goal 7",
+                                             "Goal 8 - Decent Work and Economic Growth" = "Goal 8",
+                                             "Goal 9 - Industry, Innovation and Infrastructure" = "Goal 9",
+                                             "Goal 10 - Reduced Inequality" = "Goal 10",
+                                             "Goal 11 - Sustainable Cities and Communities" = "Goal 11",
+                                             "Goal 12 - Responsible Consumption and Production" = "Goal 12",
+                                             "Goal 13 - Climate Action" = "Goal 13",
+                                             "Goal 14 - Life Below Water" = "Goal 14",
+                                             "Goal 15 - Life on Land" = "Goal 15",
+                                             "Goal 16 - Peace, Justice and Strong Institutions" = "Goal 16",
+                                             "Goal 17 - Partnerships to achieve the Goal" = "Goal 17"
+                                             ),
+                                           selected = "Goal 14"
+                               )),
+                             
+                             mainPanel(plotlyOutput("bubblePlot"))
+                    
+                  ))
+                  
                 ))
 
 # Define server logic required to draw a histogram
@@ -145,7 +183,7 @@ server <- function(input, output) {
     sdg_plotter(goal_view = goal_in, var_in = var)
   })
   
-  output$countryPlot <- renderPlot({
+  output$goalPlot <- renderPlot({
     ind_view <- switch(
       input$ind_view,
       "The Biosphere Pillar" = c(6, 7, 12, 13, 14, 15),
@@ -204,6 +242,74 @@ server <- function(input, output) {
     
   })
   
+  output$bubblePlot <- renderPlotly({
+    age_view <- switch(
+      input$age_view,
+      "Goal 1" = 1,
+      "Goal 2" = 2,
+      "Goal 3" = 3,
+      "Goal 4" = 4,
+      "Goal 5" = 5,
+      "Goal 6" = 6,
+      "Goal 7" = 7,
+      "Goal 8" = 8,
+      "Goal 9" = 9,
+      "Goal 10" = 10,
+      "Goal 11" = 11,
+      "Goal 12" = 12,
+      "Goal 13" = 13,
+      "Goal 14" = 14,
+      "Goal 15" = 15,
+      "Goal 16" = 16,
+      "Goal 17" = 17
+    )
+   
+    ind <- glob_inds %>%
+      filter(goal %in% {{age_view}}) %>% 
+      select(indicator) %>% 
+      distinct() %>% 
+      mutate(indicator = factor(indicator))
+    
+     
+    ggplotly(
+    glob_inds %>%
+      filter(goal %in% {{age_view}}) %>%
+      filter(!is.na(latest_data_year)) %>%
+      group_by(goal, latest_data_year) %>%
+      mutate(year_freq = n()) %>%
+      ungroup() %>%
+      mutate(goal = factor(goal, levels = 17:1), indicator = factor(indicator),
+             indicator = factor(indicator, levels = rev(levels(indicator)))) %>%
+      select(goal, indicator, latest_data_year, year_freq) %>%
+      arrange(goal, latest_data_year) %>%
+      distinct() %>%
+      ggplot(
+        .,
+        aes(
+          x = latest_data_year,
+          y = indicator,
+          size = year_freq,
+          fill = goal,
+          col = goal,
+          text = year_freq
+        )
+      ) +
+      geom_point(alpha = 0.75, shape = 21) +
+      sdg_fill_scale +
+      sdg_col_scale +
+      theme_fiona() +
+      theme(legend.position = "none") +
+      ylab(paste0("Goal ",{{age_view}}, " Indicators")) +
+      xlab("Year") +
+      ggtitle(paste0("Age of Most Recent Indicator Data - Goal ", {{age_view}})) +
+      guides(
+        fill = FALSE,
+        col = FALSE,
+        size = guide_legend(title = "Number of Indicators")
+      )
+    , tooltip = "text") %>% layout(height = 500, width = 600)
+    
+  })
 }
 
 # Run the application
