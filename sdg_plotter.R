@@ -25,10 +25,6 @@ sdg_plotter <- function(goal_view = 1:17, var_in = "num_indicators"){
     dplyr::filter(goal %in% {{goal_view}} &
              region_un != "Antarctica" &
              region_un != "Seven seas (open ocean)") %>% 
-    dplyr::group_by(entity, indicator) %>%
-    dplyr::filter(latest_data_year == max(latest_data_year) |
-        is.na(latest_data_year)) %>%
-    dplyr::ungroup() %>%
     dplyr::mutate(total_inds = n_distinct(indicator)) %>% 
     dplyr::group_by(entity) %>%
     dplyr::summarise(sum_ind = sum(!is.na(latest_data_year)), prop_ind = 100*(sum_ind/unique(total_inds))) %>% 
@@ -53,9 +49,7 @@ sdg_plotter <- function(goal_view = 1:17, var_in = "num_indicators"){
       dplyr::filter(goal %in% {{goal_view}} &
                       region_un != "Antarctica" &
                       region_un != "Seven seas (open ocean)") %>% 
-      group_by(entity, indicator) %>%
-      filter(latest_data_year == max(latest_data_year)) %>%
-      ungroup() %>%
+      filter(!is.na(latest_data_year)) %>%
       group_by(entity) %>%
       summarise(mean_year = mean(latest_data_year), disp_val = mean_year)
     
@@ -79,7 +73,6 @@ sdg_plotter <- function(goal_view = 1:17, var_in = "num_indicators"){
     leaflet::colorBin("YlOrRd", domain = map_out$disp_val, bins = bins)
   
   leaflet::leaflet(map_out) %>%
-    #clearBounds() %>% 
     setView(0, 30, 2) %>%
     addProviderTiles("CartoDB.Positron") %>%
     addPolygons(
