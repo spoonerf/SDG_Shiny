@@ -19,17 +19,16 @@ library(rnaturalearth)
 library(rnaturalearthhires)
 library(shiny)
 library(sf)
+library(bslib)
 
 source("sdg_plotter.R")
 source("sdg_useful.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(titlePanel(strong("SDG Indicators")),
-                
+                theme = bslib::bs_theme(version = 4, bootswatch = "united"),
                 navbarPage(
                   "",
-                  
-                  
                   tabPanel("Maps",
                            sidebarLayout(
                              sidebarPanel(
@@ -72,8 +71,10 @@ ui <- fluidPage(titlePanel(strong("SDG Indicators")),
                                    "Mean Age of Most Recent Indicator Data" = "mean_age"
                                  ),
                                  selected = "num_indicators"
-                               )
-                             ),
+                               ),
+                               HTML("<p>All data is taken from the <a href='https://sdg-tracker.org/'> SDG Tracker Project</a></p>"),
+                               HTML("<p><a href ='https://github.com/spoonerf/SDG_Shiny'> Code for Shiny App available on Github</a></p>")
+                               ),
                              
                              mainPanel(leafletOutput(
                                "map", width = 800, height = 500
